@@ -5,11 +5,22 @@ import { badRequest } from './errors.js';
 const text = (label, min, max) =>
   z.string({ required_error: `${label} is required.`, invalid_type_error: `${label} must be text.` })
     .transform((s) => s.replace(/\s+/g, ' ').trim())
-    .pipe(z.string().min(min, `${label} is required.`).max(max, `${label} must be at most ${max} characters.`));
+    .pipe(
+      z.string()
+        .refine((s) => min === 0 || s.length > 0, `${label} is required.`)
+        .refine((s) => s.length === 0 || s.length >= min, `${label} must be at least ${min} characters.`)
+        .refine((s) => s.length <= max, `${label} must be at most ${max} characters.`),
+    );
+
+/** A number that tells "missing" apart from "not a number" (so the message is accurate). */
+const num = (label) =>
+  z.preprocess(
+    (v) => (v === undefined || v === null || v === '' ? undefined : Number(v)),
+    z.number({ required_error: `${label} is required.`, invalid_type_error: `${label} must be a number.` }),
+  );
 
 const id = (label) =>
-  z.coerce.number({ invalid_type_error: `${label} must be a number.`, required_error: `${label} is required.` })
-    .int(`${label} must be a whole number.`).positive(`${label} must be positive.`);
+  num(label).pipe(z.number().int(`${label} must be a whole number.`).positive(`${label} must be positive.`));
 
 const isoInstant = z
   .string({ required_error: 'Start time is required.' })
@@ -43,14 +54,14 @@ export const schemas = {
     description: text('Description', 0, 500).optional(),
     trainerId: id('Trainer'),
     startsAt: isoInstant,
-    durationMin: z.coerce.number({ invalid_type_error: 'Duration must be a number.' })
+    durationMin: num('Duration').pipe(z.number()
       .int('Duration must be a whole number of minutes.')
       .min(15, 'Duration must be at least 15 minutes.')
-      .max(240, 'Duration must be at most 240 minutes.'),
-    capacity: z.coerce.number({ invalid_type_error: 'Capacity must be a number.', required_error: 'Capacity is required.' })
+      .max(240, 'Duration must be at most 240 minutes.')),
+    capacity: num('Capacity').pipe(z.number()
       .int('Capacity must be a whole number.')
       .min(1, 'Capacity must be at least 1.')
-      .max(200, 'Capacity must be at most 200.'),
+      .max(200, 'Capacity must be at most 200.')),
   }).strict(),
 
   membershipCreate: z.object({

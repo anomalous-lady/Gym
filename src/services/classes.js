@@ -164,7 +164,10 @@ export function updateClass(db, id, patch, ctx) {
 
     if (next.trainerId !== cls.trainer_id) assertTrainer(db, next.trainerId);
     const endsAt = endOf(next.startsAt, next.durationMin);
-    assertTrainerFree(db, next.trainerId, next.startsAt, endsAt, id);
+    // Only re-check clashes when who or when actually changed (a capacity edit must always work).
+    if (timeChanged || next.trainerId !== cls.trainer_id) {
+      assertTrainerFree(db, next.trainerId, next.startsAt, endsAt, id);
+    }
 
     const taken = db
       .prepare(`SELECT COUNT(*) AS n FROM bookings WHERE class_id = ? AND status IN ('booked', 'attended', 'absent')`)
