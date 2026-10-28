@@ -135,7 +135,7 @@ export function seed(db, { now = new Date(), timeZone = 'Asia/Kolkata' } = {}) {
 
 // Run directly: `npm run seed`
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const config = loadConfig();
+  const config = loadConfig({ jwtSecret: 'not-needed-by-the-seed-script' });
   const db = openDb(config.databasePath);
   const out = seed(db, { timeZone: config.timezone });
   console.log(`Seeded ${out.users} demo accounts for ${out.today} into ${config.databasePath}.`);
