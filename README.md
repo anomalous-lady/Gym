@@ -9,7 +9,7 @@ Node.js · Express · SQLite (better-sqlite3) · vanilla JavaScript frontend (no
 Requires Node 20 or newer.
 
 ```bash
-npm install
+npm install              # installs without compiling: better-sqlite3 ships prebuilt binaries (see .npmrc)
 cp .env.example .env      # optional for local use; every setting has a default
 npm run seed              # loads demo data (wipes existing data in the database)
 npm start                 # http://localhost:3000
