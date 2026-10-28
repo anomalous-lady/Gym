@@ -49,3 +49,21 @@ export function formatWhen(iso, timeZone) {
 }
 
 export const toIso = (date) => new Date(date).toISOString();
+
+/** The UTC instant (ISO) at which calendar day `dateStr` begins in `timeZone`. */
+export function zonedDayStart(dateStr, timeZone) {
+  // Find the UTC instant at which `dateStr` 00:00 begins in `timeZone` (no DST assumptions).
+  const guess = Date.parse(`${dateStr}T00:00:00Z`);
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date(guess)).map((p) => [p.type, p.value]));
+  const asIfUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+  return new Date(guess - (asIfUtc - guess)).toISOString();
+}
+
+/** UTC instant for a wall-clock time (HH:MM) on `dateStr` in `timeZone`. */
+export function zonedTime(dateStr, hhmm, timeZone) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return new Date(Date.parse(zonedDayStart(dateStr, timeZone)) + (h * 60 + m) * 60_000).toISOString();
+}
