@@ -61,7 +61,7 @@ Three layers stop that, all in the database, not in client code:
 
 Queue order is the booking row id (`AUTOINCREMENT`), so it is strictly join order. A member who cancels and re-books gets a new row, meaning the back of the queue.
 
-**How this is tested.** better-sqlite3 is synchronous, so inside one Node process requests cannot truly interleave. A same-process test therefore proves little. `tests/bookings.test.js` spawns **8 separate OS processes**, each with its own connection to the same database file, that start at the same millisecond and all try to book the last place. Exactly one wins and seven join the waitlist. I checked that this test can fail: with `BEGIN IMMEDIATE` removed, the workers deadlock and the test fails (it has a 20 s guard that reports "bookings are not being serialised").
+**How this is tested.** better-sqlite3 is synchronous, so inside one Node process requests cannot truly interleave. A same-process test therefore proves little. `tests/bookings.test.js` spawns **8 separate OS processes**, each with its own connection to the same database file, that start at the same millisecond and all try to book the last place. Exactly one wins and seven join the waitlist. I checked that this test can fail: with `BEGIN IMMEDIATE` removed, seven of the eight workers die with `SQLITE_BUSY_SNAPSHOT` and the test fails. The 25-request HTTP test, by contrast, still passes with the locking removed, because one Node process cannot interleave synchronous calls. It checks queue behaviour, not the lock.
 
 ## Data model
 
@@ -100,7 +100,7 @@ notifications(id, user_id, kind, message, ref_id, created_at, read_at)
 
 ## Status
 
-**Finished and exercised in a browser:** everything in the table above, on desktop and phone widths, including keyboard focus, dialogs and reduced-motion.
+**Finished and exercised in a browser:** everything in the table above, at desktop and phone widths (no horizontal overflow at 390px). Keyboard focus styles, dialog focus trapping and `prefers-reduced-motion` are implemented but I did not test them with assistive technology.
 
 **Not done, and what I'd do with more time**
 - **Expiry reminders are in-app and logged, not e-mailed.** The e-mail is simulated in the server log. Next step: a transactional-mail provider behind the same `notify()` call.

@@ -159,6 +159,7 @@ describe('capacity across separate processes (real parallelism)', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gym-race-'));
     const file = path.join(dir, 'race.db');
     const env = await makeEnv({ file, clock: makeClock() });
+    try {
     const trainer = env.addUser('Race Trainer', 'trainer');
     const people = Array.from({ length: 8 }, (_, i) => env.addUser(`Proc ${i}`));
     const cls = env.addClass({ trainerId: trainer.id, capacity: 1 });
@@ -168,21 +169,23 @@ describe('capacity across separate processes (real parallelism)', () => {
     const outputs = await Promise.all(people.map((p) => new Promise((resolve, reject) => {
       let out = '';
       const child = spawn(process.execPath, [worker, file, String(cls), String(p.id), String(startAt)], { stdio: ['ignore', 'pipe', 'inherit'] });
-      // Fail fast and loudly if the locking is ever broken and workers deadlock.
-      const guard = setTimeout(() => { child.kill('SIGKILL'); reject(new Error('worker timed out - bookings are not being serialised')); }, 20_000);
+      // Safety net so a stuck worker can never hang the test run.
+      const guard = setTimeout(() => { child.kill('SIGKILL'); reject(new Error('worker did not finish within 20s')); }, 20_000);
       child.stdout.on('data', (d) => { out += d; });
       child.on('close', () => { clearTimeout(guard); resolve(JSON.parse(out.trim().split('\n').pop())); });
       child.on('error', reject);
     })));
 
-    assert.ok(outputs.every((o) => o.ok), JSON.stringify(outputs));
+    assert.ok(outputs.every((o) => o.ok), `a worker failed (bookings are not being serialised): ${JSON.stringify(outputs)}`);
     assert.equal(outputs.filter((o) => o.status === 'booked').length, 1);
     assert.equal(outputs.filter((o) => o.status === 'waitlisted').length, 7);
     const verify = openDb(file);
     assert.deepEqual(counts(verify, cls), { booked: 1, waitlisted: 7 });
     verify.close();
-    await env.close();
-    fs.rmSync(dir, { recursive: true, force: true });
+    } finally {
+      await env.close();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
