@@ -1,0 +1,24 @@
+{
+  "name": "aurelian-gym-waitlist",
+  "version": "1.0.0",
+  "description": "Gym class booking with an automatic, server-side waitlist.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "dotenv": "^18.0.9",
+    "express": "^4.22.3",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^3.25.76"
+  }
+}
