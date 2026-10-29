@@ -36,6 +36,21 @@ Other trainers: `isolde@aurelian.club`, `dorian@aurelian.club`. Other members: `
 
 **Seeing a promotion with two browser windows:** sign in as Priti in one window and join the Signature HIIT waitlist (3rd in line). In another window sign in as Cassius and cancel his place. Percival (first in line) is moved in instantly. Cancel again and Octavia is next. Every screen refreshes itself every 8 seconds, and the member who is moved in gets a notification.
 
+## Deploy (free-tier friendly)
+
+No API keys or external services are needed. Set these environment variables on the host:
+
+| Variable | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `JWT_SECRET` | a long random string: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
+| `AUTO_SEED` | `true` (loads demo data the first time, when the database is empty) |
+| `DATABASE_PATH` | `./data/gym.db`, or a persistent volume path such as `/data/gym.db` |
+
+Build command: `npm install` · Start command: `npm start`. The host provides `PORT` automatically.
+
+SQLite is a file, so the host needs a persistent disk if you want data to survive restarts. On a free tier without one the data resets on redeploy, and `AUTO_SEED` reloads the demo data, which is fine for a demo.
+
 ## What it does (against the brief)
 
 | Requirement | Where |

@@ -9,7 +9,14 @@ const app = createApp({ db, config });
 
 const userCount = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
 if (userCount === 0) {
-  console.warn('[hint] The database is empty. Run "npm run seed" to load demo members, trainers and classes.');
+  if (process.env.AUTO_SEED === 'true') {
+    // Handy on a fresh host: load demo data once, only when the database is empty.
+    const { seed } = await import('../scripts/seed.js');
+    seed(db, { timeZone: config.timezone });
+    console.log('[seed] Empty database detected: loaded demo data (see README for logins).');
+  } else {
+    console.warn('[hint] The database is empty. Run "npm run seed" to load demo members, trainers and classes.');
+  }
 }
 
 const server = app.listen(config.port, () => {
