@@ -5,6 +5,7 @@ import { loadConfig } from '../src/config.js';
 import { openDb } from '../src/db.js';
 import { hashPassword } from '../src/auth.js';
 import { addDays, addMonths, dateInTz, zonedTime } from '../src/dates.js';
+import { pathToFileURL } from 'node:url';
 
 export const DEMO_PASSWORD = 'Aurelian2026';
 
@@ -134,7 +135,8 @@ export function seed(db, { now = new Date(), timeZone = 'Asia/Kolkata' } = {}) {
 }
 
 // Run directly: `npm run seed`
-if (import.meta.url === `file://${process.argv[1]}`) {
+// (pathToFileURL makes this comparison work on Windows paths too)
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const config = loadConfig({ jwtSecret: 'not-needed-by-the-seed-script' });
   const db = openDb(config.databasePath);
   const out = seed(db, { timeZone: config.timezone });
